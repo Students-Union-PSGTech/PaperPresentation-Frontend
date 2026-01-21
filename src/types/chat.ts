@@ -11,6 +11,18 @@ export interface ChatRoom {
   userId: string;
   reviewer_id: string;
   status: 'pending' | 'completed' | 'declined';
+  closed: boolean;
+  paperName: string;
+  theme: string;
+  topic: string;
+  date: string;
+  deadline: string;
+  hall: string;
+  rules: string;
+  teamSize: number;
+  tagline: string;
+  userName: string;
+  userEmail: string;
   paperTitle?: string;
   reviewerName?: string;
   lastMessage?: Message;

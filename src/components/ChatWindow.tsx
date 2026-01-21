@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { type ChatRoom } from '../types/chat';
@@ -15,6 +14,7 @@ export default function ChatWindow() {
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedChatRoomId, setSelectedChatRoomId] = useState<string | null>(null);
   const { user } = useAuth();
 
   // Fetch chatrooms on component mount
@@ -27,10 +27,15 @@ export default function ChatWindow() {
 
       try {
         setLoading(true);
-        const response = await axios.get(`${API_BASE_URL}/api/events/papers/${user?.role}/chats`);
+        const response = await axios.get(`${API_BASE_URL}/api/events/paper/${user?.role}/chats`);
         console.log(response);
         if (response.data.success) {
-          setChatRooms(response.data.chats || []);
+          const rooms = response.data.chats || [];
+          setChatRooms(rooms);
+         
+          if (rooms.length > 0 && !selectedChatRoomId) {
+            setSelectedChatRoomId(rooms[0]._id);
+          }
         } else {
           setError('Failed to fetch chatrooms');
         }
@@ -48,24 +53,33 @@ export default function ChatWindow() {
     fetchChatRooms();
   }, [user?.role]);
 
+  const selectedChatRoom = chatRooms.find(room => room._id === selectedChatRoomId);
+
   return (
-    <Routes>
-      <Route 
-        path="/" 
-        element={
-          <ChatRoomsList 
-            chatRooms={chatRooms}
-            loading={loading}
-            error={error}
-          />
-        } 
-      />
-      <Route 
-        path="/chat/:chatRoomId" 
-        element={
-          <ChatInterface chatRooms={chatRooms} />
-        } 
-      />
-    </Routes>
+    <div className="flex h-full gap-0">
+      {/* Left Sidebar - Chat Rooms List */}
+      <div className="w-80 border-r border-gray-200 bg-white flex flex-col">
+        <ChatRoomsList 
+          chatRooms={chatRooms}
+          loading={loading}
+          error={error}
+          selectedChatRoomId={selectedChatRoomId}
+          onSelectChatRoom={setSelectedChatRoomId}
+        />
+      </div>
+
+      {/* Right Panel - Chat Interface */}
+      <div className="flex-1 flex flex-col w-full">
+        {selectedChatRoom ? (
+          <ChatInterface selectedChatRoom={selectedChatRoom} />
+        ) : (
+          <div className="flex items-center justify-center h-full bg-gray-50">
+            <div className="text-center">
+              <p className="text-gray-500 text-lg">Select a chat to start messaging</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
